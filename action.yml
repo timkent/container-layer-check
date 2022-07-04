@@ -1,0 +1,24 @@
+description: Action to check if the specified container shares a layer with the parent
+inputs:
+  container:
+    description: Container image name
+    required: true
+  parent:
+    description: Parent image name
+    required: true
+outputs:
+  match:
+    description: Returns true if a common layer was found, otherwise false
+    value: ${{ steps.container-layer-check.outputs.match }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - id: container-layer-check
+      run: python ${{ github.action_path }}/container_layer_check.py
+      shell: bash
+      env:
+        CONTAINER: ${{ inputs.container }}
+        PARENT: ${{ inputs.parent }}
