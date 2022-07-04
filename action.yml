@@ -1,3 +1,4 @@
+name: Container Layer Check
 description: Action to check if the specified container shares a layer with the parent
 inputs:
   container:
