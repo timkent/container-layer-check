@@ -12,12 +12,11 @@ from urllib.parse import urlparse
 class Container:
     def __init__(self, image: str):
         self.image = self._normalise_image_name(image)
-        pass
 
     @functools.cached_property
     def config(self) -> dict:
         try:
-            skopeo = subprocess.run(['skopeo', 'inspect', '--config', self.image],
+            skopeo = subprocess.run(['skopeo', '--override-os', 'linux', 'inspect', '--config', self.image],
                                     capture_output=True, check=True, text=True)
         except subprocess.CalledProcessError as e:
             print(f'::error title=skopeo::{e.stderr}')
@@ -62,13 +61,22 @@ if __name__ == '__main__':
     container = Container(os.environ['CONTAINER'].strip())
     parent = Container(os.environ['PARENT'].strip())
 
-    print(f'Checking if "{container.image}" shares a layer with "{parent.image}"')
-    if any(layer in container.layers for layer in parent.layers):
-        print('Matching layer found')
-        match = 'true'
-    else:
-        print('No match was found')
+    # We want all the parent layers to match, so find out how many layers belong to the parent
+    required_common_layers = len(container.layers) - len(parent.layers)
+
+    print(f'Checking if "{container.image}" has common layers with "{parent.image}"')
+    if len([layer for layer in container.layers if layer in parent.layers]) < required_common_layers:
+        print('Not enough common layers found')
         match = 'false'
+    else:
+        print('Matching common layers found')
+        match = 'true'
+
+    github_output_file = os.environ.get('GITHUB_OUTPUT')
 
     print(f'Setting "match" to "{match}"')
-    print(f'::set-output name=match::{match}')
+    if github_output_file:
+        with open(github_output_file, 'a') as f:
+            f.write(f'match={match}\n')
+    else:
+        print(f'::set-output name=match::{match}')

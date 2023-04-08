@@ -1,6 +1,6 @@
 # container-layer-check
 
-This is an action to check if the specified container shares a layer with the parent. If no match is found, the parent image has likely changed. This action performs the check without pulling the images, and works across repositories.
+This is an action to check if the specified container shares layers with the parent. If the parent layers do not match, the parent image has likely changed. This action performs the check without pulling the images, and works across repositories.
 
 This action depends on `skopeo` and at least version 3.9 of `python`. It should work on any of the available Ubuntu runners from `ubunt-18.04` on.
 
@@ -26,19 +26,19 @@ jobs:
         if: steps.container-layer-check.outputs.match == 'false'
 ```
 
-The `checkout` step has an `if` condition to ensure it only runs if there was no layer match found.
+The `checkout` step has an `if` condition to ensure it only runs if the parent image layers do not match.
 
 Keep in mind that this is just checking the container layers, so if as part of your build process you install extra packages, it won't be able to tell you if the packages need updating.
 
 ## Inputs
 
-| Input | Description |
-| --- | --- |
+| Input       | Description              |
+|-------------|--------------------------|
 | `container` | Container image to check |
-| `parent` | Parent image to check |
+| `parent`    | Parent image to check    |
 
 ## Outputs
 
-| Output | Description |
-| --- | --- |
-| `match` | Returns `true` if a layer match was found, otherwise `false` |
+| Output  | Description                                              |
+|---------|----------------------------------------------------------|
+| `match` | Returns `true` if parent layers match, otherwise `false` |
