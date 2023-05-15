@@ -16,7 +16,7 @@ class Container:
     @functools.cached_property
     def config(self) -> dict:
         try:
-            skopeo = subprocess.run(['skopeo', '--override-os', 'linux', 'inspect', '--config', self.image],
+            skopeo = subprocess.run(['skopeo', 'inspect', '--config', self.image],
                                     capture_output=True, check=True, text=True)
         except subprocess.CalledProcessError as e:
             print(f'::error title=skopeo::{e.stderr}')
@@ -61,12 +61,10 @@ if __name__ == '__main__':
     container = Container(os.environ['CONTAINER'].strip())
     parent = Container(os.environ['PARENT'].strip())
 
-    # We want all the parent layers to match, so find out how many layers belong to the parent
-    required_common_layers = len(container.layers) - len(parent.layers)
-
+    # We want all the parent layers to match
     print(f'Checking if "{container.image}" has common layers with "{parent.image}"')
-    if len([layer for layer in container.layers if layer in parent.layers]) < required_common_layers:
-        print('Not enough common layers found')
+    if any([layer for layer in parent.layers if layer not in container.layers]):
+        print('Differing parent layers found')
         match = 'false'
     else:
         print('Matching common layers found')
